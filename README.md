@@ -4,6 +4,10 @@ As an example, we use a cheap N20 DC motor that is already equipped with a quadr
 
 <img src="https://github.com/auralius/arduino-pid-template/blob/main/N20.png" alt="Alt Text" style="width:30%; height:auto;">
 
+The motor was purchased from:  
+
+https://www.tokopedia.com/cncstorebandung/motor-dc-jga12-n20-dc-3-6v-high-torque-micro-dc-gearbox-jga12-n20-with-encoder-71-rpm-a1015
+
 To drive the motor, we use a Arduino Motor Shiled rev 3. The complete system is as follows:
 
 

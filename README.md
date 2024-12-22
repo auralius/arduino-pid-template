@@ -1,5 +1,7 @@
 This repository contains a template for implementing a PID control in an Arduino Uno.
 
+Check the [this note](https://github.com/auralius/arduino-pid-template/blob/main/Notes%20on%20PID%20control%20with%20Arduino.pdf) on the control derivation.
+
 As an example, we use a cheap N20 DC motor that is already equipped with a quadrature encoder.
 
 <img src="https://github.com/auralius/arduino-pid-template/blob/main/N20.png" alt="Alt Text" style="width:30%; height:auto;">
@@ -8,7 +10,7 @@ The motor was purchased from:
 
 https://www.tokopedia.com/cncstorebandung/motor-dc-jga12-n20-dc-3-6v-high-torque-micro-dc-gearbox-jga12-n20-with-encoder-71-rpm-a1015
 
-To drive the motor, we use a Arduino Motor Shiled rev 3. The complete system is as follows:
+To drive the motor, we use an Arduino Motor Shiled rev 3. The complete system is as follows:
 
 
 <img src="https://github.com/auralius/arduino-pid-template/blob/main/motor-control.png" alt="Alt Text" style="width:50%; height:auto;">

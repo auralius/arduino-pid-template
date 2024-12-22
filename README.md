@@ -23,6 +23,6 @@ To log and plot the motor data, we use CoolTerm and gnuplot. The logged data for
 
 <img src="https://github.com/auralius/arduino-pid-template/blob/main/rx.png" alt="Alt Text" style="width:50%; height:auto;">
 
-The following GIF animation shows that the implemented controller works. Currently, only the P-control has been implemented in this repository.
+The following GIF animation shows that the implemented controller works.
 
 ![](./demo1.gif)

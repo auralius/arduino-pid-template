@@ -1,6 +1,8 @@
 This repository contains a template for implementing a PID control in an Arduino Uno.
 
-Check the [this note](https://github.com/auralius/arduino-pid-template/blob/main/Notes%20on%20PID%20control%20with%20Arduino.pdf) on the control derivation.
+**Check the [this note](https://github.com/auralius/arduino-pid-template/blob/main/Notes%20on%20PID%20control%20with%20Arduino.pdf) on the control derivation.**
+
+The PID is implemented as a periodic task for Timer 1. The PID runs constantly (hard realtime) at 1 kHz, while serial communication runs in the background and when the resource is available. 
 
 As an example, we use a cheap N20 DC motor that is already equipped with a quadrature encoder.
 

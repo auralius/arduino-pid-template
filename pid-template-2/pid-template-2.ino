@@ -8,22 +8,25 @@
 #define TIMER1_INTERVAL_MS             1
 
 
-int encoderA   = 3;      // Digital pin #3
-int encoderB   = 2;      // Digital pin #2
-const int pwm  = 11;     // PWM of motor, Timer 2
-const int dir  = 13;     // Direction of the motor. 
+int encoderA_pin         = 3;      // Digital pin #3
+int encoderB_pin         = 2;      // Digital pin #2
+const int pwm_port       = 11;     // PWM of motor, Timer 2
+const int dir_port       = 13;     // Direction of the motor. 
 
 
-int pulses     = 0;      // Output pulses.
-const int ppr  = 2940;   // Pulses per rotation 
+volatile int pulses      = 0;      // Output pulses.
+const int ppr            = 2940;   // Pulses per rotation 
 
 
-String inputs[4];        // ["KP", "KI", "KD", "SV"]
+String inputs[4]; // ["KP", "KI", "KD", "SV"]
 
 
-float past_err  = 0.0;
-float err       = 0.0;
-float derr      = 0.0;
+float past_err  = 0.0;   // previous error
+float err       = 0.0;   // current error
+float P         = 0.0;   // proportional term
+float I         = 0.0;   // integral term
+float D         = 0.0;   // derivative term
+float Df        = 0.0;   // filtered derivative term
 
 
 float KP        = 200.0; // kp
@@ -32,7 +35,6 @@ float KI        = 0.1;   // hs
 float CO        = 0.0;   // control output
 float PV        = 0.0;   // process value
 float SV        = 0.0;   // set value
-
 
 unsigned long base;       
 unsigned long now;       // current time stamp in micro-secs
@@ -43,20 +45,19 @@ float dt;                // elapsed time in milli-secs
 void setup() {
   ITimer1.init();
   ITimer1.attachInterruptInterval(TIMER1_INTERVAL_MS, Timer1Handler);
- 
    
   // https://arduinoinfo.mywikis.net/wiki/Arduino-PWM-Frequency
   TCCR2B = TCCR2B & B11111000 | B00000001; // Timer2, PWM frequency: 31372.55 Hz
   
   Serial.begin(115200);
 
-  pinMode(pwm, OUTPUT);
-  pinMode(dir, OUTPUT);
+  pinMode(pwm_port, OUTPUT);
+  pinMode(dir_port, OUTPUT);
   
-  analogWrite(pwm, 0);     
-  digitalWrite(dir, HIGH);
-  pinMode(encoderA, INPUT);
-  pinMode(encoderB, INPUT);
+  analogWrite(pwm_port, 0);     
+  digitalWrite(dir_port, HIGH);
+  pinMode(encoderA_pin, INPUT);
+  pinMode(encoderB_pin, INPUT);
 
   attachInterrupt(0, A_CHANGE, CHANGE);
 
@@ -94,7 +95,7 @@ void rx()
 
 inline void tx()
 {
-  Serial.print(dt);
+  Serial.print((float)now/1000000., 4);
   Serial.print(",");
   Serial.print(SV);
   Serial.print(",");
@@ -114,21 +115,27 @@ inline void clock_update()
 
 
 /*
- * Put your PID contro here!
+ * Put your PID control here!
  */
+float tau = 0.1; // seconds
 inline void PID()
 { 
-  // PV = baca analor sensor temeprature
+  PV       = (float)pulses / (float)ppr * 360.0; // update your process value here
+
   past_err = err;
   err      = SV - PV;
-  derr     = err - past_err;
+
+  P        = KP * err;
+  D        = KD * (err - past_err) / (dt*1e-3);
+  I        = I + KI * (dt*1e-3) * err;
+  Df       = (tau * Df + (dt*1e-3) * D) / (tau + (dt*1e-3)) ;
   
-  CO       = abs(err * KP);
+  CO       = abs(P + I + Df);
 }
 
 
 void Timer1Handler()
-{
+{ 
   // Update all time variables
   clock_update();
 
@@ -141,12 +148,12 @@ void Timer1Handler()
 
   // Handle direction
   if (err < 0.0)
-    digitalWrite(dir, LOW);
+    digitalWrite(dir_port, HIGH);
   else
-    digitalWrite(dir, HIGH);
+    digitalWrite(dir_port, LOW);
 
   // Send control output to PWM
-  analogWrite(pwm, (int)CO);
+  analogWrite(pwm_port, (int)CO);
 }
 
 
@@ -160,8 +167,6 @@ void loop()
   
   // Serial transmit
   tx();
-
-  delay(1);
 }
 
 
@@ -170,8 +175,8 @@ void loop()
  */
 void A_CHANGE() 
 {
-  if ( digitalRead(encoderB) == 0 ) {
-    if ( digitalRead(encoderA) == 0 ) {
+  if ( digitalRead(encoderB_pin) == 0 ) {
+    if ( digitalRead(encoderA_pin) == 0 ) {
       // A fell, B is low
       pulses--; // Moving forward
     } 
@@ -181,7 +186,7 @@ void A_CHANGE()
     }
   } 
   else {
-    if ( digitalRead(encoderA) == 0 ) {
+    if ( digitalRead(encoderA_pin) == 0 ) {
       pulses++; // Moving reverse
     } 
     else {
@@ -189,6 +194,4 @@ void A_CHANGE()
       pulses--; // Moving forward
     }
   }
-
-  PV = (float)pulses / (float)ppr * 360.0;
 }

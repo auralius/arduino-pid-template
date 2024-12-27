@@ -2,29 +2,10 @@ This repository contains a template for implementing a PID control in an Arduino
 
 **Check the [this note](https://github.com/auralius/arduino-pid-template/blob/main/Notes%20on%20PID%20control%20with%20Arduino.pdf) on the control derivation.**
 
-The PID is implemented as a periodic task for Timer 1. The PID runs constantly (hard realtime) at 1 kHz, while serial communication runs in the background and when the resource is available. 
+In this branch, we will apply a PID control to a thermal system described in [this link](https://www.notion.so/Universitas-Pertamina-Temperature-Control-Device-02b5a889e17d4ee9ae5521881e55af0d).
 
-As an example, we use a cheap N20 DC motor that is already equipped with a quadrature encoder.
+<img src="https://github.com/auralius/arduino-pid-template/blob/thermal/heater-control.jpeg" alt="Alt Text" style="width:30%; height:auto;">
 
-<img src="https://github.com/auralius/arduino-pid-template/blob/main/N20.png" alt="Alt Text" style="width:30%; height:auto;">
-
-The motor was purchased from:  
-
-https://www.tokopedia.com/cncstorebandung/motor-dc-jga12-n20-dc-3-6v-high-torque-micro-dc-gearbox-jga12-n20-with-encoder-71-rpm-a1015
-
-To drive the motor, we use an Arduino Motor Shiled rev 3. The complete system is as follows:
+The thermal system has 2 heaters: **heater #1 is connected to PWM pin #9** and **heater #2 to PWM pin #10**. PWM #9 and #10 belong to **Timer 1**. Therefore, the PID control will be implemented as a periodic task of **Timer 2**. The PID runs constantly (hard realtime) at 1 kHz, while serial communication runs in the background and when the resource is available.
 
 
-<img src="https://github.com/auralius/arduino-pid-template/blob/main/motor-control.png" alt="Alt Text" style="width:50%; height:auto;">
-
-To avoid recompiling the codes every time we tune the controller, we propose the following input configuration:
-
-<img src="https://github.com/auralius/arduino-pid-template/blob/main/tx.png" alt="Alt Text" style="width:50%; height:auto;">
-
-To log and plot the motor data, we use CoolTerm and gnuplot. The logged data format is as follows:
-
-<img src="https://github.com/auralius/arduino-pid-template/blob/main/rx.png" alt="Alt Text" style="width:50%; height:auto;">
-
-The following GIF animation shows that the implemented controller works.
-
-![](./demo1.gif)

@@ -12,6 +12,6 @@ set datafile separator ","
 #set xrange [0:1000]
 
 while(1){
-    plot '< tail -n 2000 data.txt' using 2 with line title "SV" lw 2, '< tail -n 2000 data.txt' using 4 with line title "PV" lw 2
+    plot '< tail -n 100000 data.txt' using 2 with line title "SV" lw 2, '< tail -n 100000 data.txt' using 4 with line title "PV" lw 2
     pause 0.1
 }

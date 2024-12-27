@@ -1,6 +1,14 @@
+/*
+ * Heater 1 is using PWM pin #9 
+ * Heater 2 is using PWM pin #10
+ * PWM pin #9 and #10 belong to Timer 1.
+ * Thus, we put out PID in Timer 2.
+ * Timer 0 can be used but its setting can not be modified since it is reserved by the Arduino for timing purposes.
+ */
+ 
 #define TIMER_INTERRUPT_DEBUG         0
 #define _TIMERINTERRUPT_LOGLEVEL_     0
-#define USE_TIMER_1                   true
+#define USE_TIMER_2                   true 
 
 #include "TimerInterrupt.h"
 
@@ -8,19 +16,14 @@
 #define TIMER1_INTERVAL_MS             1
 
 
-int encoderA_pin         = 3;      // Digital pin #3
-int encoderB_pin         = 2;      // Digital pin #2
-const int pwm_port       = 11;     // pwm_port of motor, Timer 2
-const int dir_port       = 13;     // dir_portection of the motor. 
-
-
-volatile int pulses      = 0;      // Output pulses.
-const int ppr            = 2940;   // Pulses per rotation 
+const int pwm1_port       = 9;     // PWM of heater #1, Timer 1A
+const int pwm2_port       = 10;    // PWM of heater #2, Timer 1B
 
 
 String inputs[4]; // ["KP", "KI", "KD", "SV"]
 
 
+float past_err  = 0.0;   // previous error
 float err       = 0.0;   // current error
 float P         = 0.0;   // proportional term
 float I         = 0.0;   // integral term
@@ -43,23 +46,20 @@ float dt;                // elapsed time in milli-secs
 
 
 void setup() {
-  ITimer1.init();
-  ITimer1.attachInterruptInterval(TIMER1_INTERVAL_MS, Timer1Handler);
-   
-  // https://arduinoinfo.mywikis.net/wiki/Arduino-pwm_port-Frequency
-  TCCR2B = TCCR2B & B11111000 | B00000001; // Timer2, pwm_port frequency: 31372.55 Hz
+  // https://arduinoinfo.mywikis.net/wiki/Arduino-PWM-Frequency
+  cli();
+  TCCR1B = TCCR1B & B11111000 | B00000010;    // 3921.16 Hz
+  sei();
+  
+  ITimer2.init();
+  ITimer2.attachInterruptInterval(TIMER1_INTERVAL_MS, Timer1Handler);
   
   Serial.begin(115200);
 
-  pinMode(pwm_port, OUTPUT);
-  pinMode(dir_port, OUTPUT);
-  
-  analogWrite(pwm_port, 0);     
-  digitalWrite(dir_port, HIGH);
-  pinMode(encoderA_pin, INPUT);
-  pinMode(encoderB_pin, INPUT);
-
-  attachInterrupt(0, A_CHANGE, CHANGE);
+  pinMode(pwm1_port, OUTPUT);  
+  pinMode(pwm2_port, OUTPUT);  
+  analogWrite(pwm1_port, 0);     
+  analogWrite(pwm2_port, 0);     
 
   base = micros();
   now  = micros() - base;
@@ -121,7 +121,7 @@ float tau = 0.1; // seconds
 inline void PID()
 { 
   pastPV   = PV;
-  PV       = (float)pulses / (float)ppr * 360.0; // update your process value here
+  PV       = (float)analogRead(A0) * 500.0/1024.0;
 
   err      = SV - PV;
 
@@ -130,7 +130,7 @@ inline void PID()
   I        = I + KI * (dt*1e-3) * err;
   Df       = (tau * Df + (dt*1e-3) * D) / (tau + (dt*1e-3)) ;
   
-  CO       = abs(P + I + Df);
+  CO       = P + I + Df;
 }
 
 
@@ -145,15 +145,11 @@ void Timer1Handler()
   // Guard the control signal
   if (CO > 255.)
     CO = 255.;
+  else if (CO < 0.)
+    CO = 0.;
 
-  // Handle dir_portection
-  if (err < 0.0)
-    digitalWrite(dir_port, HIGH);
-  else
-    digitalWrite(dir_port, LOW);
-
-  // Send control output to pwm_port
-  analogWrite(pwm_port, (int)CO);
+  // Send control output to PWM
+  analogWrite(pwm1_port, (int)CO);
 }
 
 
@@ -167,31 +163,4 @@ void loop()
   
   // Serial transmit
   tx();
-}
-
-
-/*
- * The following two functions handle the quadrature encoder.
- */
-void A_CHANGE() 
-{
-  if ( digitalRead(encoderB_pin) == 0 ) {
-    if ( digitalRead(encoderA_pin) == 0 ) {
-      // A fell, B is low
-      pulses--; // Moving forward
-    } 
-    else {
-      // A rose, B is high
-      pulses++; // Moving reverse
-    }
-  } 
-  else {
-    if ( digitalRead(encoderA_pin) == 0 ) {
-      pulses++; // Moving reverse
-    } 
-    else {
-      // A rose, B is low
-      pulses--; // Moving forward
-    }
-  }
 }

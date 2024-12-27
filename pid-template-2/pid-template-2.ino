@@ -13,7 +13,7 @@
 #include "TimerInterrupt.h"
 
  
-#define TIMER1_INTERVAL_MS             1
+#define TIMER2_INTERVAL_MS             1
 
 
 const int pwm1_port       = 9;     // PWM of heater #1, Timer 1A
@@ -51,7 +51,7 @@ void setup() {
   sei();
   
   ITimer2.init();
-  ITimer2.attachInterruptInterval(TIMER1_INTERVAL_MS, Timer1Handler);
+  ITimer2.attachInterruptInterval(TIMER2_INTERVAL_MS, Timer2Handler);
   
   Serial.begin(115200);
 
@@ -133,7 +133,7 @@ inline void PID()
 }
 
 
-void Timer1Handler()
+void Timer2Handler()
 { 
   // Update all time variables
   clock_update();
